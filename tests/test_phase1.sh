@@ -14,17 +14,34 @@ TESTS_FAILED=0
 PORT=6667
 PASSWORD="testpass"
 SERVER_PID=""
+TEMP_DIR=""
+
+# Function to create temporary directory
+setup_temp_dir() {
+    TEMP_DIR=$(mktemp -d)
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Failed to create temporary directory${NC}"
+        exit 1
+    fi
+}
+
+# Function to cleanup temporary directory
+cleanup_temp_dir() {
+    if [ ! -z "$TEMP_DIR" ] && [ -d "$TEMP_DIR" ]; then
+        rm -rf "$TEMP_DIR"
+    fi
+}
 
 # Function to start server
 start_server() {
     echo -e "${YELLOW}Starting IRC server on port $PORT...${NC}"
-    ./ircserv $PORT $PASSWORD > /tmp/server_output.log 2>&1 &
+    ./ircserv $PORT $PASSWORD > "$TEMP_DIR/server_output.log" 2>&1 &
     SERVER_PID=$!
     sleep 1
     
     if ! kill -0 $SERVER_PID 2>/dev/null; then
         echo -e "${RED}FAILED: Server failed to start${NC}"
-        cat /tmp/server_output.log
+        cat "$TEMP_DIR/server_output.log"
         exit 1
     fi
     echo -e "${GREEN}Server started with PID $SERVER_PID${NC}"
@@ -58,7 +75,7 @@ report_test() {
 test_server_startup() {
     echo -e "\n${YELLOW}Test 1: Server startup with valid parameters${NC}"
     
-    ./ircserv $PORT $PASSWORD > /tmp/test_startup.log 2>&1 &
+    ./ircserv $PORT $PASSWORD > $TEMP_DIR/test_startup.log 2>&1 &
     local pid=$!
     sleep 1
     
@@ -67,7 +84,7 @@ test_server_startup() {
         wait $pid 2>/dev/null
         report_test "Server startup" 0
     else
-        cat /tmp/test_startup.log
+        cat $TEMP_DIR/test_startup.log
         report_test "Server startup" 1
     fi
 }
@@ -76,7 +93,7 @@ test_server_startup() {
 test_invalid_port() {
     echo -e "\n${YELLOW}Test 2: Server rejects invalid port${NC}"
     
-    ./ircserv 0 $PASSWORD > /tmp/test_invalid_port.log 2>&1
+    ./ircserv 0 $PASSWORD > $TEMP_DIR/test_invalid_port.log 2>&1
     local result=$?
     
     if [ $result -ne 0 ]; then
@@ -90,7 +107,7 @@ test_invalid_port() {
 test_empty_password() {
     echo -e "\n${YELLOW}Test 3: Server rejects empty password${NC}"
     
-    ./ircserv $PORT "" > /tmp/test_empty_pass.log 2>&1
+    ./ircserv $PORT "" > $TEMP_DIR/test_empty_pass.log 2>&1
     local result=$?
     
     if [ $result -ne 0 ]; then
@@ -137,7 +154,7 @@ test_multiple_clients() {
     sleep 1
     
     # Check server log for multiple connections
-    local conn_count=$(grep -c "New client connected" /tmp/server_output.log 2>/dev/null || echo "0")
+    local conn_count=$(grep -c "New client connected" $TEMP_DIR/server_output.log 2>/dev/null || echo "0")
     
     kill $pid1 $pid2 $pid3 2>/dev/null
     wait $pid1 $pid2 $pid3 2>/dev/null
@@ -163,10 +180,10 @@ test_message_reception() {
     sleep 1
     
     # Check if message was received
-    if grep -q "Received.*NICK testuser" /tmp/server_output.log; then
+    if grep -q "Received.*NICK testuser" $TEMP_DIR/server_output.log; then
         report_test "Message reception" 0
     else
-        cat /tmp/server_output.log
+        cat $TEMP_DIR/server_output.log
         report_test "Message reception" 1
     fi
     
@@ -191,10 +208,10 @@ test_partial_messages() {
     sleep 2
     
     # Check if complete message was reconstructed
-    if grep -q "Received.*NICK testuser" /tmp/server_output.log; then
+    if grep -q "Received.*NICK testuser" $TEMP_DIR/server_output.log; then
         report_test "Partial message buffering" 0
     else
-        cat /tmp/server_output.log
+        cat $TEMP_DIR/server_output.log
         report_test "Partial message buffering" 1
     fi
     
@@ -212,10 +229,10 @@ test_client_disconnect() {
     sleep 2
     
     # Check if disconnection was logged
-    if grep -q "disconnected" /tmp/server_output.log; then
+    if grep -q "disconnected" $TEMP_DIR/server_output.log; then
         report_test "Client disconnection handling" 0
     else
-        cat /tmp/server_output.log
+        cat $TEMP_DIR/server_output.log
         report_test "Client disconnection handling" 1
     fi
     
@@ -240,13 +257,13 @@ test_parser_valid_commands() {
     sleep 2
     
     # Count received messages
-    local msg_count=$(grep -c "Received" /tmp/server_output.log 2>/dev/null || echo "0")
+    local msg_count=$(grep -c "Received" $TEMP_DIR/server_output.log 2>/dev/null || echo "0")
     
     if [ "$msg_count" -ge 3 ]; then
         report_test "Parser valid commands" 0
     else
         echo "  Only $msg_count messages received"
-        cat /tmp/server_output.log
+        cat $TEMP_DIR/server_output.log
         report_test "Parser valid commands" 1
     fi
     
@@ -270,7 +287,7 @@ test_nonblocking_io() {
     sleep 1
     
     # Check if both clients connected (server didn't block)
-    local conn_count=$(grep -c "New client connected" /tmp/server_output.log 2>/dev/null || echo "0")
+    local conn_count=$(grep -c "New client connected" $TEMP_DIR/server_output.log 2>/dev/null || echo "0")
     
     kill $client1 $client2 2>/dev/null
     wait $client1 $client2 2>/dev/null
@@ -297,6 +314,15 @@ main() {
         exit 1
     fi
     
+    # Check if binary is executable
+    if [ ! -x "./ircserv" ]; then
+        echo -e "${RED}ERROR: ircserv is not executable. Please run 'chmod +x ircserv'.${NC}"
+        exit 1
+    fi
+    
+    # Set up temporary directory
+    setup_temp_dir
+    
     # Run all tests
     test_server_startup
     test_invalid_port
@@ -318,7 +344,7 @@ main() {
     echo -e "Total: $((TESTS_PASSED + TESTS_FAILED))"
     
     # Cleanup
-    rm -f /tmp/server_output.log /tmp/test_*.log
+    cleanup_temp_dir
     
     # Exit with appropriate code
     if [ $TESTS_FAILED -eq 0 ]; then
@@ -331,7 +357,7 @@ main() {
 }
 
 # Cleanup on exit
-trap 'stop_server; rm -f /tmp/server_output.log /tmp/test_*.log' EXIT
+trap 'stop_server; cleanup_temp_dir' EXIT
 
 # Run main
 main
