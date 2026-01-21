@@ -1,0 +1,13 @@
+# Build artifacts
+obj/
+*.o
+ircserv
+
+# Test artifacts
+tests/test_parser
+tests/*.o
+tests/*.log
+
+# Temporary files
+*.tmp
+.DS_Store

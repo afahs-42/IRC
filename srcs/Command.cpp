@@ -88,7 +88,7 @@ bool Command::isValidCommand(const std::string& cmd)
 {
     const std::string validCommands[] = {
         "NICK", "USER", "PASS", "JOIN", "PART", "PRIVMSG",
-        "PING", "PONG", "KICK", "MODE","TOPIC", "INVITE"};
+        "PING", "PONG", "KICK", "MODE","TOPIC", "INVITE", "NOTICE"};
     
     size_t count = sizeof(validCommands) / sizeof(validCommands[0]);
     for (size_t i = 0; i < count; i++)
