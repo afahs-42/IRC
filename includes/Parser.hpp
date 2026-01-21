@@ -14,6 +14,7 @@
 #define PARSER_HPP
 
 #include <string>
+#include <iostream>
 #include "Command.hpp"
 
 class Parser {
