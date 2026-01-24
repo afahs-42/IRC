@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Parser.hpp"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -109,17 +110,37 @@ void Server::handleClientMessage(int index)
 	client->appendBuffer(std::string(buffer));
 
 	std::string buf = client->getBuffer();
-	size_t pos;
-	while ((pos = buf.find("\r\n")) != std::string::npos)
-	{
-		std::string message = buf.substr(0, pos);
-		buf.erase(0, pos + 2);
-		
-		std::cout << "Received from " << client->getFd() << ": " << message << std::endl;
-	}
-	
+	std::vector<std::string> messages = Parser::extractMessages(buf);
 	client->clearBuffer();
 	client->appendBuffer(buf);
+
+	for (size_t i = 0; i < messages.size(); i++)
+	{
+		std::cout << "Raw message from " << client->getFd() << ": " << messages[i] << std::endl;
+		
+		Command cmd = Parser::parseMessage(messages[i]);
+		
+		if (cmd.isValid())
+		{
+			std::cout << "✓ Valid command parsed!" << std::endl;
+			std::cout << "  Command: " << cmd.getCommand() << std::endl;
+			
+			if (!cmd.getPrefix().empty())
+				std::cout << "  Prefix: " << cmd.getPrefix() << std::endl;
+			
+			std::vector<std::string> params = cmd.getParams();
+			for (size_t j = 0; j < params.size(); j++)
+				std::cout << "  Param[" << j << "]: " << params[j] << std::endl;
+			
+			if (!cmd.getTrailing().empty())
+				std::cout << "  Trailing: " << cmd.getTrailing() << std::endl;
+		}
+		else
+		{
+			std::cout << "✗ Invalid command" << std::endl;
+		}
+		std::cout << "---" << std::endl;
+	}
 }
 
 void Server::removeClient(int index)
