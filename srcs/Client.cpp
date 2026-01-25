@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-Client::Client(int fd) : _fd(fd), _authenticated(false)
+Client::Client(int fd) : _fd(fd), _authenticated(false), _registered(false), _hasPassword(false)
 {
 }
 
@@ -35,6 +35,16 @@ bool Client::isAuthenticated() const
 	return _authenticated;
 }
 
+bool Client::isRegistered() const
+{
+	return _registered;
+}
+
+bool Client::hasPassword() const
+{
+	return _hasPassword;
+}
+
 void Client::setNickname(const std::string& nickname)
 {
 	_nickname = nickname;
@@ -58,6 +68,16 @@ void Client::clearBuffer()
 void Client::setAuthenticated(bool auth)
 {
 	_authenticated = auth;
+}
+
+void Client::setRegistered(bool registered)
+{
+	_registered = registered;
+}
+
+void Client::setHasPassword(bool hasPass)
+{
+	_hasPassword = hasPass;
 }
 
 void Client::sendMessage(const std::string& message)

@@ -11,6 +11,8 @@ private:
 	std::string _username;
 	std::string _buffer;
 	bool _authenticated;
+	bool _registered; 
+    bool _hasPassword; 
 
 	Client();
 
@@ -31,6 +33,11 @@ public:
 	void setAuthenticated(bool auth);
 
 	void sendMessage(const std::string& message);
+
+	bool isRegistered() const;
+    bool hasPassword() const;
+    void setRegistered(bool registered);
+    void setHasPassword(bool hasPass);
 };
 
 #endif

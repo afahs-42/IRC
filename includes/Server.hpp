@@ -5,6 +5,7 @@
 #include <vector>
 #include <poll.h>
 #include "Client.hpp"
+#include "Command.hpp"
 
 class Server
 {
@@ -22,12 +23,21 @@ private:
 	void acceptNewClient();
 	void handleClientMessage(int index);
 	void removeClient(int index);
+	
+	void executeCommand(Client* client, const Command& cmd);
+	void handlePass(Client* client, const Command& cmd);
+	void handleNick(Client* client, const Command& cmd);
+	void handleUser(Client* client, const Command& cmd);
+	
+	bool isNicknameInUse(const std::string& nickname, Client* exclude);
+	void sendWelcome(Client* client);
 
 public:
 	Server(int port, const std::string& password);
 	~Server();
 
 	void run();
+	std::string getPassword() const;
 };
 
 #endif

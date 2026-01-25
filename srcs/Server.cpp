@@ -1,5 +1,6 @@
 #include "Server.hpp"
 #include "Parser.hpp"
+#include "Utils.hpp"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
@@ -64,6 +65,11 @@ Server::~Server()
 		close(_serverFd);
 }
 
+std::string Server::getPassword() const
+{
+	return _password;
+}
+
 void Server::acceptNewClient()
 {
 	struct sockaddr_in clientAddr;
@@ -116,30 +122,10 @@ void Server::handleClientMessage(int index)
 
 	for (size_t i = 0; i < messages.size(); i++)
 	{
-		std::cout << "Raw message from " << client->getFd() << ": " << messages[i] << std::endl;
-		
 		Command cmd = Parser::parseMessage(messages[i]);
 		
 		if (cmd.isValid())
-		{
-			std::cout << "✓ Valid command parsed!" << std::endl;
-			std::cout << "  Command: " << cmd.getCommand() << std::endl;
-			
-			if (!cmd.getPrefix().empty())
-				std::cout << "  Prefix: " << cmd.getPrefix() << std::endl;
-			
-			std::vector<std::string> params = cmd.getParams();
-			for (size_t j = 0; j < params.size(); j++)
-				std::cout << "  Param[" << j << "]: " << params[j] << std::endl;
-			
-			if (!cmd.getTrailing().empty())
-				std::cout << "  Trailing: " << cmd.getTrailing() << std::endl;
-		}
-		else
-		{
-			std::cout << "✗ Invalid command" << std::endl;
-		}
-		std::cout << "---" << std::endl;
+			executeCommand(client, cmd);
 	}
 }
 
@@ -151,6 +137,38 @@ void Server::removeClient(int index)
 	delete client;
 	_clients.erase(_clients.begin() + (index - 1));
 	_fds.erase(_fds.begin() + index);
+}
+
+void Server::executeCommand(Client* client, const Command& cmd)
+{
+	std::string command = cmd.getCommand();
+	
+	std::cout << "Executing command: " << command << " from client " << client->getFd() << std::endl;
+	
+	if (command == "PASS")
+		handlePass(client, cmd);
+	else if (command == "NICK")
+		handleNick(client, cmd);
+	else if (command == "USER")
+		handleUser(client, cmd);
+	else
+	{
+		if (!client->isRegistered())
+		{
+			std::string reply = Utils::formatReply(ERR_NOTREGISTERED, "*", ":You have not registered");
+			client->sendMessage(reply);
+		}
+	}
+}
+
+bool Server::isNicknameInUse(const std::string& nickname, Client* exclude)
+{
+	for (size_t i = 0; i < _clients.size(); i++)
+	{
+		if (_clients[i] != exclude && _clients[i]->getNickname() == nickname)
+			return true;
+	}
+	return false;
 }
 
 void Server::run()
