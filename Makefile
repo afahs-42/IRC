@@ -7,6 +7,7 @@ SRCS = srcs/main.cpp \
        srcs/Server.cpp \
        srcs/Client.cpp \
        srcs/Parser.cpp \
+       srcs/Channel.cpp \
        srcs/Command.cpp \
        srcs/utils/Utils.cpp \
        srcs/commands/Pass.cpp \
