@@ -65,6 +65,22 @@ Server::~Server()
 		close(_serverFd);
 }
 
+//these function i used in commands part 
+Channel* Server::createChannel(const std::string& name){}
+void Server::removeChannel(const std::string& name){}
+Client* Server::getClientByNickname(const std::string& nickname){}
+
+
+Channel* Server::getChannel(const std::string& name)
+{
+    for (size_t i = 0; i < _channels.size(); ++i)
+    {
+        if (_channels[i]->getName() == name)
+            return _channels[i];
+    }
+    return NULL;
+}
+
 std::string Server::getPassword() const
 {
 	return _password;
@@ -151,6 +167,8 @@ void Server::executeCommand(Client* client, const Command& cmd)
 		handleNick(client, cmd);
 	else if (command == "USER")
 		handleUser(client, cmd);
+	else if (command == "JOIN")
+		handleJoin(client,cmd);
 	else
 	{
 		if (!client->isRegistered())

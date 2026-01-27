@@ -29,3 +29,50 @@ std::string Utils::formatMessage(const std::string& prefix, const std::string& c
 	msg += command + " " + params;
 	return msg;
 }
+
+std::vector<std::string> Utils::splitByComma(const std::string& str)
+{
+    std::vector<std::string> result;
+    std::string current;
+    
+    for (size_t i = 0; i < str.length(); ++i)
+    {
+        if (str[i] == ',')
+        {
+            if (!current.empty())
+            {
+                result.push_back(current);
+                current.clear();
+            }
+        }
+        else
+        {
+            current += str[i];
+        }
+    }
+    
+    if (!current.empty())
+        result.push_back(current);
+    
+    return result;
+}
+
+bool Utils::isChannelName(const std::string& name)
+{
+    return !name.empty() && (name[0] == '#' || name[0] == '&');
+}
+
+bool Utils::isValidChannelName(const std::string& name)
+{
+    if (name.empty() || (name[0] != '#' && name[0] != '&'))
+        return false;
+    
+    for (size_t i = 0; i < name.length(); ++i)
+    {
+        char c = name[i];
+        if (c == ' ' || c == ',' || c == '\07' || c < 33)
+            return false;
+    }
+    
+    return true;
+}

@@ -39,6 +39,12 @@ const std::vector<Client*>& Channel::getMembers() const
     return members;
 }
 
+
+size_t Channel::getMemberCount() const
+{
+    return members.size();
+}
+
 void Channel::addMember(Client* client)
 {
     if (!isMember(client))
