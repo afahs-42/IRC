@@ -2,6 +2,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 #include "Command.hpp"
+#include "Utils.hpp"
 #include <iostream>
 #include <sstream>
 
@@ -24,10 +25,10 @@ void Server::handleJoin(Client* client, const Command& cmd)
 		handlePartAll(client);
 		return;
 	}
-	std::vector<std::string> channels = splitbyComma(params[0]);
+	std::vector<std::string> channels = Utils::splitByComma(params[0]);
 	std::vector<std::string> keys;
 	if (params.size() > 1)
-		keys = splitbyComma(params[1]);
+		keys = Utils::splitByComma(params[1]);
 	for (size_t i = 0; i < channels.size(); ++i)
 	{
 		std::string channelName = channels[i];

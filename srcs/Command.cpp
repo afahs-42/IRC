@@ -86,13 +86,13 @@ void Command::setValid(bool valid)
 
 bool Command::isValidCommand(const std::string& cmd)
 {
-    const std::string validCommands[] = {
-        "NICK", "USER", "PASS", "JOIN", "PRIVMSG", "KICK", "MODE","TOPIC", "INVITE"};
-    size_t count = sizeof(validCommands) / sizeof(validCommands[0]);
-    for (size_t i = 0; i < count; i++)
-    {
-        if (cmd == validCommands[i])
-            return true;
-    }
-    return false;
+	const std::string validCommands[] = {
+		"NICK", "USER", "PASS", "JOIN", "PRIVMSG", "NOTICE", "KICK", "MODE", "TOPIC", "INVITE"};
+	size_t count = sizeof(validCommands) / sizeof(validCommands[0]);
+	for (size_t i = 0; i < count; i++)
+	{
+		if (cmd == validCommands[i])
+			return true;
+	}
+	return false;
 }

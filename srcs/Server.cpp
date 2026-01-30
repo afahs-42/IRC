@@ -61,15 +61,13 @@ Server::~Server()
 		delete _clients[i];
 	_clients.clear();
 	
+	for (size_t i = 0; i < _channels.size(); i++)
+		delete _channels[i];
+	_channels.clear();
+	
 	if (_serverFd >= 0)
 		close(_serverFd);
 }
-
-//these function i used in commands part 
-Channel* Server::createChannel(const std::string& name){}
-void Server::removeChannel(const std::string& name){}
-Client* Server::getClientByNickname(const std::string& nickname){}
-
 
 Channel* Server::getChannel(const std::string& name)
 {
@@ -148,8 +146,22 @@ void Server::handleClientMessage(int index)
 void Server::removeClient(int index)
 {
 	Client* client = _clients[index - 1];
-	close(client->getFd());
 	
+	for (size_t i = 0; i < _channels.size(); ++i)
+	{
+		if (_channels[i]->isMember(client))
+		{
+			_channels[i]->removeMember(client);
+			if (_channels[i]->isEmpty())
+			{
+				std::string channelName = _channels[i]->getName();
+				removeChannel(channelName);
+				--i;
+			}
+		}
+	}
+	
+	close(client->getFd());
 	delete client;
 	_clients.erase(_clients.begin() + (index - 1));
 	_fds.erase(_fds.begin() + index);
@@ -168,7 +180,11 @@ void Server::executeCommand(Client* client, const Command& cmd)
 	else if (command == "USER")
 		handleUser(client, cmd);
 	else if (command == "JOIN")
-		handleJoin(client,cmd);
+		handleJoin(client, cmd);
+	else if (command == "PRIVMSG")
+		handlePrivmsg(client, cmd);
+	else if (command == "NOTICE")
+		handleNotice(client, cmd);
 	else
 	{
 		if (!client->isRegistered())
@@ -211,4 +227,36 @@ void Server::run()
 			}
 		}
 	}
+}
+
+Channel* Server::createChannel(const std::string& name)
+{
+	Channel* newChannel = new Channel(name);
+	_channels.push_back(newChannel);
+	std::cout << "Channel created: " << name << std::endl;
+	return newChannel;
+}
+
+void Server::removeChannel(const std::string& name)
+{
+	for (size_t i = 0; i < _channels.size(); ++i)
+	{
+		if (_channels[i]->getName() == name)
+		{
+			delete _channels[i];
+			_channels.erase(_channels.begin() + i);
+			std::cout << "Channel removed: " << name << std::endl;
+			return;
+		}
+	}
+}
+
+Client* Server::getClientByNickname(const std::string& nickname)
+{
+	for (size_t i = 0; i < _clients.size(); ++i)
+	{
+		if (_clients[i]->getNickname() == nickname)
+			return _clients[i];
+	}
+	return NULL;
 }
