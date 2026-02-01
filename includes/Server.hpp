@@ -36,6 +36,9 @@ private:
 	void handleChannelMessage(Client* client, const std::string& channelName, const std::string& message);
 	void handlePrivateMessage(Client* sender, const std::string& targetNick, const std::string& message);
 	void handleNotice(Client* client, const Command& cmd);
+	void handleKick(Client* client, const Command& cmd);
+	void handleInvite(Client* client, const Command& cmd);
+	void handleTopic(Client* client, const Command& cmd);
 	
 	bool isNicknameInUse(const std::string& nickname, Client* exclude);
 	void sendWelcome(Client* client);

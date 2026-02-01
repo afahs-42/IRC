@@ -14,7 +14,10 @@ SRCS = srcs/main.cpp \
        srcs/commands/Nick.cpp \
        srcs/commands/User.cpp \
        srcs/commands/Join.cpp \
-       srcs/commands/Privmsg.cpp
+       srcs/commands/Privmsg.cpp \
+       srcs/commands/Kick.cpp \
+       srcs/commands/Invite.cpp \
+       srcs/commands/Topic.cpp
 
 OBJ_DIR = obj
 OBJS = $(SRCS:srcs/%.cpp=$(OBJ_DIR)/%.o)

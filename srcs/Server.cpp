@@ -185,6 +185,12 @@ void Server::executeCommand(Client* client, const Command& cmd)
 		handlePrivmsg(client, cmd);
 	else if (command == "NOTICE")
 		handleNotice(client, cmd);
+	else if (command == "INVITE")
+		handleInvite(client, cmd);
+	else if (command == "TOPIC")
+		handleTopic(client, cmd);	
+	else if (command == "KICK")
+		handleKick(client, cmd);
 	else
 	{
 		if (!client->isRegistered())
