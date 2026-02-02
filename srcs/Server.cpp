@@ -191,6 +191,8 @@ void Server::executeCommand(Client* client, const Command& cmd)
 		handleTopic(client, cmd);	
 	else if (command == "KICK")
 		handleKick(client, cmd);
+	else if (command == "MODE")
+	    handleMode(client, cmd);
 	else
 	{
 		if (!client->isRegistered())

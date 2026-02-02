@@ -39,7 +39,7 @@ private:
 	void handleKick(Client* client, const Command& cmd);
 	void handleInvite(Client* client, const Command& cmd);
 	void handleTopic(Client* client, const Command& cmd);
-	
+	void handleMode(Client* client, const Command& cmd);
 	bool isNicknameInUse(const std::string& nickname, Client* exclude);
 	void sendWelcome(Client* client);
 
