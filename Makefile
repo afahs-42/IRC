@@ -14,6 +14,8 @@ SRCS = srcs/main.cpp \
        srcs/commands/Nick.cpp \
        srcs/commands/User.cpp \
        srcs/commands/Join.cpp \
+       srcs/commands/Part.cpp \
+       srcs/commands/Quit.cpp \
        srcs/commands/Privmsg.cpp \
        srcs/commands/Kick.cpp \
        srcs/commands/Invite.cpp \

@@ -8,9 +8,26 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <csignal>
+#include <cerrno>
+
+bool g_running = true;
+
+void signalHandler(int signal)
+{
+	if (signal == SIGINT || signal == SIGTERM)
+	{
+		std::cout << "\nShutting down server..." << std::endl;
+		g_running = false;
+	}
+}
 
 Server::Server(int port, const std::string& password) : _serverFd(-1), _port(port), _password(password)
 {
+	std::signal(SIGINT, signalHandler);
+	std::signal(SIGTERM, signalHandler);
+	std::signal(SIGPIPE, SIG_IGN);
+
 	_serverFd = socket(AF_INET, SOCK_STREAM, 0);
 	if (_serverFd < 0)
 		throw std::runtime_error("Failed to create socket");
@@ -71,12 +88,12 @@ Server::~Server()
 
 Channel* Server::getChannel(const std::string& name)
 {
-    for (size_t i = 0; i < _channels.size(); ++i)
-    {
-        if (_channels[i]->getName() == name)
-            return _channels[i];
-    }
-    return NULL;
+	for (size_t i = 0; i < _channels.size(); ++i)
+	{
+		if (_channels[i]->getName() == name)
+			return _channels[i];
+	}
+	return NULL;
 }
 
 std::string Server::getPassword() const
@@ -122,7 +139,13 @@ void Server::handleClientMessage(int index)
 	{
 		if (bytesRead == 0)
 			std::cout << "Client " << client->getFd() << " disconnected" << std::endl;
-		removeClient(index);
+		else if (errno != EAGAIN && errno != EWOULDBLOCK)
+			std::cout << "Recv error for client " << client->getFd() << std::endl;
+		
+		if (bytesRead == 0 || (bytesRead < 0 && errno != EAGAIN && errno != EWOULDBLOCK))
+		{
+			removeClient(index);
+		}
 		return;
 	}
 
@@ -147,10 +170,17 @@ void Server::removeClient(int index)
 {
 	Client* client = _clients[index - 1];
 	
+	std::string quitMsg = Utils::formatMessage(
+		client->getNickname() + "!~" + client->getUsername() + "@localhost",
+		"QUIT",
+		":Client disconnected"
+	);
+
 	for (size_t i = 0; i < _channels.size(); ++i)
 	{
 		if (_channels[i]->isMember(client))
 		{
+			_channels[i]->broadcast(quitMsg, NULL);
 			_channels[i]->removeMember(client);
 			if (_channels[i]->isEmpty())
 			{
@@ -181,6 +211,10 @@ void Server::executeCommand(Client* client, const Command& cmd)
 		handleUser(client, cmd);
 	else if (command == "JOIN")
 		handleJoin(client, cmd);
+	else if (command == "PART")
+		handlePart(client, cmd);
+	else if (command == "QUIT")
+		handleQuit(client, cmd);
 	else if (command == "PRIVMSG")
 		handlePrivmsg(client, cmd);
 	else if (command == "NOTICE")
@@ -192,7 +226,7 @@ void Server::executeCommand(Client* client, const Command& cmd)
 	else if (command == "KICK")
 		handleKick(client, cmd);
 	else if (command == "MODE")
-	    handleMode(client, cmd);
+		handleMode(client, cmd);
 	else
 	{
 		if (!client->isRegistered())
@@ -215,16 +249,19 @@ bool Server::isNicknameInUse(const std::string& nickname, Client* exclude)
 
 void Server::run()
 {
-	while (true)
+	while (g_running)
 	{
-		int pollCount = poll(&_fds[0], _fds.size(), -1);
+		int pollCount = poll(&_fds[0], _fds.size(), 1000);
+		
 		if (pollCount < 0)
 		{
+			if (errno == EINTR)
+				continue;
 			std::cerr << "Poll error" << std::endl;
 			break;
 		}
 
-		for (size_t i = 0; i < _fds.size(); i++)
+		for (size_t i = 0; i < _fds.size() && g_running; i++)
 		{
 			if (_fds[i].revents & POLLIN)
 			{

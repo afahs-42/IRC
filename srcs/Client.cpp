@@ -1,6 +1,8 @@
 #include "Client.hpp"
 #include <unistd.h>
 #include <sys/socket.h>
+#include <cerrno>
+#include <iostream>
 
 Client::Client(int fd) : _fd(fd), _authenticated(false), _registered(false), _hasPassword(false)
 {
@@ -83,5 +85,30 @@ void Client::setHasPassword(bool hasPass)
 void Client::sendMessage(const std::string& message)
 {
 	std::string msg = message + "\r\n";
-	send(_fd, msg.c_str(), msg.length(), 0);
+	size_t totalSent = 0;
+	size_t msgLen = msg.length();
+
+	while (totalSent < msgLen)
+	{
+		ssize_t sent = send(_fd, msg.c_str() + totalSent, msgLen - totalSent, 0);
+		
+		if (sent < 0)
+		{
+			if (errno == EAGAIN || errno == EWOULDBLOCK)
+			{
+				continue;
+			}
+			else if (errno == EPIPE || errno == ECONNRESET)
+			{
+				std::cerr << "Client " << _fd << " connection broken" << std::endl;
+				return;
+			}
+			else
+			{
+				std::cerr << "Send error for client " << _fd << std::endl;
+				return;
+			}
+		}
+		totalSent += sent;
+	}
 }

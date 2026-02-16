@@ -1,0 +1,89 @@
+c2r3s1% valgrind ./ircserv 6667 pass
+==3019213== Memcheck, a memory error detector
+==3019213== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==3019213== Using Valgrind-3.18.1 and LibVEX; rerun with -h for copyright info
+==3019213== Command: ./ircserv 6667 pass
+==3019213== 
+Server listening on port 6667
+New client connected: 4
+Executing command: PASS from client 4
+Client 4 authenticated with password
+Executing command: NICK from client 4
+Client 4 set nickname to: user1
+Executing command: USER from client 4
+Client 4 registered as user1
+Executing command: JOIN from client 4
+Channel created: #test
+Executing command: PRIVMSG from client 4
+user1 -> #test: hello all from u1
+New client connected: 5
+Executing command: PASS from client 5
+Client 5 authenticated with password
+Executing command: NICK from client 5
+Client 5 set nickname to: user2
+Executing command: USER from client 5
+Client 5 registered as user2
+Executing command: JOIN from client 5
+Executing command: PRIVMSG from client 5
+user2 -> #test: halo from u2
+Executing command: QUIT from client 5
+Client 5 quit: goodbye 
+Executing command: PART from client 4
+user1 left #test
+Channel removed: #test
+Client 4 disconnected
+^C
+Shutting down server...
+==3019213== 
+==3019213== HEAP SUMMARY:
+==3019213==     in use at exit: 0 bytes in 0 blocks
+==3019213==   total heap usage: 279 allocs, 279 frees, 84,813 bytes allocated
+==3019213== 
+==3019213== All heap blocks were freed -- no leaks are possible
+==3019213== 
+==3019213== For lists of detected and suppressed errors, rerun with: -s
+==3019213== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)
+c2r3s1% 
+
+c2r3s1% nc -C 127.0.0.1 6667
+PASS pass 
+NICK user1
+USER user1 0 * :User One
+:server 001 user1 :Welcome to the IRC Network user1!~user1@localhost
+:server 002 user1 :Your host is server, running version 1.0
+:server 003 user1 :This server was created sometime
+:server 004 user1 server 1.0 o o
+JOIN #test 
+:user1!~user1@localhost JOIN #test
+:server 331 user1 #test :No topic is set
+:server 353 user1 = #test :@user1
+:server 366 user1 #test :End of /NAMES list
+PRIVMSG #test :hello all from u1
+:user2!~user2@localhost JOIN #test
+:user2!~user2@localhost PRIVMSG #test :halo from u2
+:user2!~user2@localhost QUIT :goodbye 
+PART #test :leavin
+:user1!~user1@localhost PART #test :leavin
+^C
+c2r3s1% 
+
+
+
+
+c2r3s1% nc -C 127.0.0.1 6667
+PASS pass 
+NICK user2
+USER user2 0 * :User Two
+:server 001 user2 :Welcome to the IRC Network user2!~user2@localhost
+:server 002 user2 :Your host is server, running version 1.0
+:server 003 user2 :This server was created sometime
+:server 004 user2 server 1.0 o o
+JOIN #test 
+:user2!~user2@localhost JOIN #test
+:server 331 user2 #test :No topic is set
+:server 353 user2 = #test :@user1 user2
+:server 366 user2 #test :End of /NAMES list
+PRIVMSG #test :halo from u2
+QUIT :goodbye 
+:user2!~user2@localhost QUIT :goodbye 
+^C
