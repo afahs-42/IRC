@@ -31,13 +31,9 @@ private:
 	void handleNick(Client* client, const Command& cmd);
 	void handleUser(Client* client, const Command& cmd);
 	void handleJoin(Client* client, const Command& cmd);
-	void handlePart(Client* client, const Command& cmd);
-	void handleQuit(Client* client, const Command& cmd);
 	void handlePrivmsg(Client* client, const Command& cmd);
-	void handlePartAll(Client* client);
 	void handleChannelMessage(Client* client, const std::string& channelName, const std::string& message);
 	void handlePrivateMessage(Client* sender, const std::string& targetNick, const std::string& message);
-	void handleNotice(Client* client, const Command& cmd);
 	void handleKick(Client* client, const Command& cmd);
 	void handleInvite(Client* client, const Command& cmd);
 	void handleTopic(Client* client, const Command& cmd);

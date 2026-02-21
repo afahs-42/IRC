@@ -17,11 +17,6 @@ void Server::handleJoin(Client* client, const Command& cmd)
 			client->getNickname(), "JOIN :Not enough parameters"));
 		return;
 	}
-	if (params[0] == "0")
-	{
-		handlePartAll(client);
-		return;
-	}
 	std::vector<std::string> channels = Utils::splitByComma(params[0]);
 	std::vector<std::string> keys;
 	if (params.size() > 1)
@@ -84,28 +79,5 @@ void Server::handleJoin(Client* client, const Command& cmd)
 		client->sendMessage(namesReply);
 		client->sendMessage(Utils::formatReply(RPL_ENDOFNAMES,
 			client->getNickname(), channelName + " :End of /NAMES list"));
-	}
-}
-
-void Server::handlePartAll(Client* client)
-{
-	std::vector<Channel*> clientChannels;
-
-	for (size_t i = 0; i < _channels.size(); ++i)
-	{
-		if (_channels[i]->isMember(client))
-			clientChannels.push_back(_channels[i]);
-	}
-	for (size_t i = 0; i < clientChannels.size(); ++i)
-	{
-		Channel* channel = clientChannels[i];
-
-		std::string partMsg = Utils::formatMessage(
-			client->getNickname() + "!~" + client->getUsername() + "@localhost",
-			"PART", channel->getName() + " :Left all channels");
-		channel->broadcastToAll(partMsg);
-		channel->removeMember(client);
-		if (channel->isEmpty())
-			removeChannel(channel->getName());
 	}
 }

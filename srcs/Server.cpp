@@ -211,14 +211,8 @@ void Server::executeCommand(Client* client, const Command& cmd)
 		handleUser(client, cmd);
 	else if (command == "JOIN")
 		handleJoin(client, cmd);
-	else if (command == "PART")
-		handlePart(client, cmd);
-	else if (command == "QUIT")
-		handleQuit(client, cmd);
 	else if (command == "PRIVMSG")
 		handlePrivmsg(client, cmd);
-	else if (command == "NOTICE")
-		handleNotice(client, cmd);
 	else if (command == "INVITE")
 		handleInvite(client, cmd);
 	else if (command == "TOPIC")
